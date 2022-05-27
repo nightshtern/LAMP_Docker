@@ -1,0 +1,77 @@
+#################
+# LAMP PLAYBOOK #
+#################
+
+---
+
+- hosts: "all"
+  become: true
+  vars:
+    servername: "example.ru"
+  tasks:
+
+#Install Docker
+
+  - name: "Install Docker and Docker-compose"
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      state: "latest"
+      update_cache: true   
+    with_items:
+      - "docker.io"
+      - "docker-compose"
+
+#Copy configs and site
+  - name: "Copy configs Apache2"
+    template:
+      src: "configs/apache2/httpd.conf.j2"
+      dest: "/var/doc_storage/apache2/httpd.conf"
+
+  - name: "Copy configs PHP"
+    ansible.builtin.copy:
+      src: "configs/php/php.ini"
+      dest: "/var/doc_storage/php7/"
+      owner: "root"
+      group: "root"
+      mode: "755"
+
+  - name: "Copy configs Nginx"
+    template:
+      src: "configs/nginx/bitrix.conf.j2"
+      dest: "/var/doc_storage/nginx/conf.d/bitrix.conf"
+
+  - name: "Copy docker-compose.yml"
+    ansible.builtin.copy:
+      src: "configs/docker-compose.yml"
+      dest: "/var/doc_storage/"
+      owner: "root"
+      group: "root"
+      mode: "755"
+
+  - name: "Create directory site"
+    file:
+      path: "/var/doc_storage/apache2/site"
+      state: "directory"
+
+
+  - name: "Download and unpacking bitrix"
+    ansible.builtin.unarchive:
+      src: "https://www.1c-bitrix.ru/download/start_encode.tar.gz"
+      dest: "/var/doc_storage/apache2/site/"
+      remote_src: yes
+
+  - name: "change resolution recursively"
+    file:
+      path: "/var/doc_storage/apache2/site"
+      state: "directory"
+      owner: "root"
+      group: "root"
+      mode: "777"
+      recurse: "yes"
+
+# Run docker-compose
+
+  - name: "Run `docker-compose up`"
+    community.docker.docker_compose:
+      project_src: "/var/doc_storage/"
+      build: no

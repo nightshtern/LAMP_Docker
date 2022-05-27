@@ -1,0 +1,72 @@
+# docker-compose.yml
+
+version: '3.7'
+
+services:
+
+  apache2:
+
+    image: 'vepres/apache2'
+
+    restart: always
+
+    hostname: 'apache2'
+
+    container_name: 'apache2'
+
+    volumes:
+
+      - '/var/doc_storage/apache2/httpd.conf:/opt/apache2/conf/httpd.conf'
+
+      - '/var/doc_storage/apache2/site:/opt/apache2/htdocs'
+       
+      - '/var/doc_storage/php7/php.ini:/etc/php.ini' 
+
+    depends_on:
+      - database
+
+  database:
+
+    image: mysql
+
+    hostname: 'mysql'
+
+    volumes:
+
+      - '/var/doc_storage/db:/var/lib/mysql'
+
+    restart: always
+
+    environment:
+
+      MYSQL_ROOT_PASSWORD: 'password'
+
+      MYSQL_DATABASE: 'bitrix'
+
+      MYSQL_USER: 'bitrix'
+
+      MYSQL_PASSWORD: 'passwd'
+
+    ports:
+
+      - '3306:3306'
+
+  nginx:
+    
+    image: 'nginx'
+
+    restart: always
+
+    hostname: 'nginx'
+
+    container_name: 'nginx'
+
+    ports:
+
+      - '80:80'
+
+      - '443:443'
+
+    volumes:
+
+      - '/var/doc_storage/nginx/conf.d:/etc/nginx/conf.d'

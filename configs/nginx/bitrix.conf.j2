@@ -1,0 +1,14 @@
+server {
+server_name {{ servername }};
+    listen 80;
+
+    location / {
+        proxy_set_header   X-Forwarded-For $remote_addr;
+        proxy_set_header   Host $http_host;
+        proxy_pass         "http://apache2:8080";
+    }
+
+    if ($host = "www.{{ servername }}") {
+      return  301 $scheme://{{ servername }}$request_uri;
+    }
+}
